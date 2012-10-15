@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <style type="text/css">
+        * {margin:0; padding: 0;}
+        body {background: #192629; color: #aaa;}
+        .wrapper {width: 1000px; margin: 20px auto;}
+        #canvas {border: 10px solid #933; float: left; margin-right: 30px;}
+        button {height: 30px; width: 100px}
+    </style>
+    <title>Canvas</title>
+</head>
+<body>
+    <h3>use mouse or arrows</h3>
+    <section class="wrapper">
+        <canvas id="canvas" width='800' height='500'></canvas>
+    </section>
+    <button id='start'>Gravity</button>
+<!--     <button id='stop'>stop</button>
+    <button id='jump'>jump</button>
+    <button id='antigrav'>antiGravity</button>
+    <br> -->
+    <button id='infinity'>Infinity</button>
+
+    <script>
+        (function( $, undefined ) {
+            "use strict"
+
+            $(document).ready(function(){
+                var can, ctx, x0, y0, x, y, r, Vx, Vy, t, dt, v, a, g, Width, Height, gravityAnimation,infinityAnimation, smooth, Window, Body,
+                    moveLeft, moveRight, balls = [], ball, ball2;
+
+                function init() {
+                    Window = $(window);
+                    Body = $('body');
+                    can = $('#canvas');
+                    ctx = can[0].getContext('2d');
+                    Width = can.width();
+                    Height = can.height();
+
+                    for (i = 0; i < 2; i++) {
+                        var r = Math.floor(Math.random() * 40) + 30;
+                        // var r = 50;
+                        balls.push({
+                            x : Math.floor(Math.random() * (Width-2*r)) + r,
+                            y : Math.floor(Math.random() * (Height-2*r)) + r,
+                            r : r,
+                            Vx : Math.floor((Math.random()*2-1) * 1000) + 10,
+                            Vy : Math.floor((Math.random()*2-1) * 1000) - 10
+                        })
+                    }
+                    g = 980;
+                    smooth = 1000/70;
+
+                    for (var i = 0; i < balls.length; i++) {
+                        ball = balls[i];
+                        drawCircle(ball.x, ball.y, ball.r);
+
+                    }
+
+                    // catchBall();
+                }
+                init();
+
+                function startGravity(inter){
+
+                    function isCollision(b, c) {
+                        var dx = b.center.x - c.center.x;
+                        var dy = b.center.y - c.center.y;
+                        var dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < b.radius + c.radius) {
+                            return true;
+                        }
+                        return false;
+                    };
+
+                    var vector = function(p1, p2) {
+                        return {
+                            x: p1.x - p2.x,
+                            y: p1.y - p2.y
+                        };
+                    };
+
+                    var length = function(v) {
+                        return Math.sqrt(v.x * v.x + v.y * v.y);
+                    };
+
+                    dt = inter/1000;
+
+                    gravityAnimation = setInterval(function() {
+
+                        t += dt;
+
+                        ctx.clearRect(0, 0, can.width(), can.height());
+                        ctx.save();
+
+                        for (var i = 0; i < balls.length; i++) {
+                            ball = balls[i]
+
+                            ball.x += ball.Vx*dt;
+                            ball.y += ball.Vy*dt;
+
+                        //-- Vertical walls jump
+                            if (ball.x+ball.r >= Width) {
+                                ball.x = Width-ball.r;
+                                ball.Vx *= -.9;
+                            } else if (ball.x-ball.r <= 0) {
+                                ball.x = ball.r;
+                                ball.Vx *= -.9;
+                            }
+
+                        //-- Gorizontal walls jump
+                            if (ball.y+ball.r >= Height) {
+                                ball.y = Height-ball.r;
+                                ball.Vx = (ball.y == Height - ball.r) ? .98*ball.Vx : 1*ball.Vx;
+                                ball.Vy *= -.9;
+                            } else if (ball.y-ball.r <= 0) {
+                                ball.y = ball.r;
+                                ball.Vy *= -.9;
+                            }
+
+
+
+
+                        //-- Balls touching
+
+                            ball.Vy += g*dt;  //-- GRAVITY
+
+                            ball2 = balls[1-i];
+
+                            if (length(vector(ball, ball2)) <= ball.r+ball2.r) {
+                                console.log('touching');
+                                var V1y = ball.Vy,
+                                    V2y = ball2.Vy,
+                                    V1x = ball.Vx,
+                                    V2x = ball2.Vx;
+
+                                ball.Vy = V2y;
+                                ball2.Vy = V1y;
+                                ball.Vx = V2x;
+                                ball2.Vx = V1x;
+                            }
+
+                            console.log()
+
+
+
+
+                            drawCircle(ball.x, ball.y, ball.r);
+                        };
+
+
+                        ctx.restore();
+
+                    }, inter)
+
+
+                }
+
+                function drawCircle(x, y, r) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI*2, true);
+                    ctx.fillStyle = "rgba(50, 100, 50, 1)";
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+
+
+
+
+
+
+
+
+                // function infinity(inter, T, A) {
+                //     dt = inter/1000;
+                //     var k = 2*Math.PI/T
+                //     infinityAnimation = setInterval(function() {
+                //         t += dt;
+
+                //         x = 2*A*Math.sin(t*k/2) + 400;
+                //         y = A*Math.sin(t*k) + 250;
+
+                //         circle(x, y, r);
+                //     }, inter)
+                // }
+
+                // function sin(deg) {return Math.sin(deg*Math.PI/180)}
+                // function cos(deg) {return Math.cos(deg*Math.PI/180)}
+
+
+                // function catchBall() {
+                //     var border = can.css('border-width') ? parseInt(can.css('border-width')) : 10;
+                //     var canX = can.position().left+border;
+                //     var canY = can.position().top+border;
+                //     var R = r*r;
+                //     var dX, dY, dVx=0, dVy=0, nx, ny, X, Y;
+
+                //     can.bind('mousedown', function(e) {
+                //         X = e.pageX - canX;
+                //         Y = e.pageY - canY;
+
+                //         if ((X-ball.x)*(X-ball.x)+(Y-ball.y)*(Y-ball.y)<=R) {
+
+                //             var _preventDefault = function(evt) { evt.preventDefault(); };
+                //             Window.bind("dragstart", _preventDefault).bind("selectstart", _preventDefault);
+
+                //             clearInterval(gravityAnimation);
+                //             clearInterval(infinityAnimation);
+
+                //             Window.bind('mousemove', function(emove) {
+                //                 ball.Vx = (emove.pageX - dVx)*15+1;
+                //                 ball.Vy = (emove.pageY - dVy)*15+1;
+                //                 dVx = emove.pageX;
+                //                 dVy = emove.pageY;
+
+                //                 dX = emove.pageX - X - canX;
+                //                 dY = emove.pageY - Y - canY;
+
+                //                 nx = ball.x+dX;
+                //                 if (nx > Width - r) {nx = Width - r}
+                //                 else if (nx < r) {nx = r}
+
+                //                 ny = ball.y+dY;
+                //                 if (ny > Height - r) {ny = Height - r}
+                //                 else if (ny < r) {ny = r}
+
+                //                 console.log(nx, ny)
+                //                 circle(nx, ny, r);
+                //             })
+
+                //             Window.one('mouseup', function() {
+
+                //                 ball.x = nx;
+                //                 ball.y = ny;
+                //                 Window.unbind('mousemove').unbind("dragstart").unbind("selectstart");
+
+                //                 startGravity(smooth);
+                //             })
+                //         }
+                //     })
+                // }
+                // function jump(h) {
+                //     Vy += (y == Height-r) ? -h : 0;
+                // }
+
+                $('#start').one('click', function() {
+                    clearInterval(infinityAnimation);
+                    startGravity(smooth);
+                })
+                // $('#stop').on('click', function() {
+                //     clearInterval(gravityAnimation);
+                //     clearInterval(infinityAnimation);
+                // })
+                // $('#jump').on('click', function() {
+                //     Vy += (Vy==25) ? -500 : 0;
+                // })
+                // $('#antigrav').on('click', function() {
+                //     g = -g;
+                // })
+                // $('#infinity').on('click', function() {
+                //     clearInterval(gravityAnimation);
+                //     infinity(smooth, 2, 200)
+                // })
+                // $(document).on('keydown', function(e) {
+                //     var key = e.keyCode;
+                //     var UP = (key == 38),
+                //         LEFT = (key == 37),
+                //         RIGHT = (key == 39);
+
+                //     if (UP) {jump(500)}
+                //     else if (LEFT) {moveLeft = true}
+                //     else if (RIGHT) {moveRight = true}
+
+                // })
+                // $(document).on('keyup', function(e) {
+                //     var key = e.keyCode;
+                //     var LEFT = (key == 37),
+                //         RIGHT = (key == 39);
+
+                //     if (LEFT) {moveLeft = false}
+                //     else if (RIGHT) {moveRight = false};
+                // })
+            });
+        })(jQuery);
+    </script>
+</body>
+</html>
